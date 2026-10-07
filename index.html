@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f5d8a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="択一ドリル">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>html{-webkit-text-size-adjust:100%}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>調査士 択一ドリル</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDPMincho:wght@400;700&display=swap">
+<style>
+:root {
+  --paper: #f5f7f4;
+  --grid: rgba(47, 93, 138, 0.07);
+  --surface: #ffffff;
+  --ink: #1d2830;
+  --ink-soft: #55646e;
+  --rule: #d6ddd9;
+  --accent: #2f5d8a;
+  --accent-soft: #e3ecf5;
+  --good: #24785a;
+  --good-soft: #e1f1ea;
+  --bad: #c0402c;
+  --bad-soft: #f8e5e1;
+  --shadow: 0 1px 2px rgba(29, 40, 48, 0.06), 0 4px 16px rgba(29, 40, 48, 0.05);
+  --gothic: "BIZ UDPGothic", "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", sans-serif;
+  --mincho: "BIZ UDPMincho", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #11171b;
+    --grid: rgba(127, 168, 214, 0.06);
+    --surface: #192127;
+    --ink: #e4e9ec;
+    --ink-soft: #9aa8b1;
+    --rule: #2c3840;
+    --accent: #85afdc;
+    --accent-soft: #1f3245;
+    --good: #5cc79c;
+    --good-soft: #173328;
+    --bad: #f08a76;
+    --bad-soft: #3a211c;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #11171b;
+  --grid: rgba(127, 168, 214, 0.06);
+  --surface: #192127;
+  --ink: #e4e9ec;
+  --ink-soft: #9aa8b1;
+  --rule: #2c3840;
+  --accent: #85afdc;
+  --accent-soft: #1f3245;
+  --good: #5cc79c;
+  --good-soft: #173328;
+  --bad: #f08a76;
+  --bad-soft: #3a211c;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+* { box-sizing: border-box; }
+body {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: var(--gothic);
+  font-size: 16px;
+  line-height: 1.7;
+  padding-inline: 16px;
+  padding-block: 0 48px;
+}
+.wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 20px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ヘッダー */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  margin-inline: -16px; padding: 12px 16px;
+}
+.top-in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+.brand { font-weight: 700; font-size: 17px; letter-spacing: 0.04em; margin-right: auto; }
+.brand small { font-weight: 400; color: var(--ink-soft); font-size: 12px; margin-left: 8px; letter-spacing: 0.02em; }
+.sync { font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+.ghost { background: none; border: 1px solid var(--rule); border-radius: 8px; padding: 6px 12px; font-size: 14px; }
+
+/* ホーム */
+.hero { padding-top: 24px; display: grid; gap: 4px; }
+.hero h1 { font-size: 24px; margin: 0; text-wrap: balance; letter-spacing: 0.02em; }
+.hero p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.stat { background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; }
+.stat b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--ink-soft); letter-spacing: 0.04em; }
+
+.label { font-size: 12px; color: var(--ink-soft); letter-spacing: 0.08em; margin: 0 0 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1px solid var(--rule); background: var(--surface); border-radius: 999px;
+  padding: 8px 16px; font-size: 15px; min-height: 44px;
+}
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 700; }
+.chip:disabled { opacity: 0.45; cursor: default; }
+
+.modes { display: grid; gap: 12px; }
+.mode {
+  display: grid; grid-template-columns: 56px 1fr auto; align-items: center; gap: 16px;
+  text-align: left; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px;
+  padding: 16px; box-shadow: var(--shadow); min-height: 84px;
+}
+.mode:hover { border-color: var(--accent); }
+.mode:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
+.mode .mk { width: 56px; height: 56px; border-radius: 10px; display: grid; place-items: center; font-size: 22px; font-weight: 700; background: var(--accent-soft); color: var(--accent); font-family: var(--mincho); }
+.mode h2 { font-size: 18px; margin: 0; }
+.mode p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+.mode .count { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink-soft); }
+
+.list { display: grid; gap: 8px; }
+.row { display: flex; gap: 12px; align-items: baseline; padding: 10px 0; border-bottom: 1px dashed var(--rule); font-size: 14px; }
+.row .id { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; white-space: nowrap; }
+.row .t { color: var(--ink-soft); }
+
+/* 問題画面 */
+.qhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-top: 16px; font-size: 13px; color: var(--ink-soft); }
+.qhead .no { color: var(--accent); font-weight: 700; font-size: 15px; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.tag { border: 1px solid var(--rule); border-radius: 4px; padding: 0 6px; font-size: 12px; }
+.progress { margin-left: auto; font-variant-numeric: tabular-nums; }
+.bar { height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); transition: width .25s; }
+
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); display: grid; gap: 14px; }
+.stem { white-space: pre-line; font-family: var(--mincho); font-size: 15px; color: var(--ink-soft); margin: 0; }
+.ctx { font-family: var(--mincho); font-size: 15px; background: var(--paper); border-radius: 8px; padding: 12px 14px; margin: 0; }
+.ctx b, .stmt b { font-family: var(--gothic); font-size: 13px; color: var(--ink-soft); margin-right: 6px; }
+.stem-exam { white-space: pre-line; }
+.stmt { font-family: var(--mincho); font-size: 19px; line-height: 1.85; margin: 0; }
+.stmt .lb { font-family: var(--gothic); font-weight: 700; color: var(--accent); margin-right: 10px; }
+
+.ox { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ox button {
+  min-height: 88px; border-radius: 14px; border: 2px solid var(--rule); background: var(--surface);
+  font-family: var(--mincho); font-size: 44px; line-height: 1; font-weight: 700; box-shadow: var(--shadow);
+}
+.ox button.o { color: var(--good); }
+.ox button.x { color: var(--bad); }
+.ox button:hover:not(:disabled) { border-color: currentColor; }
+.ox button:disabled { cursor: default; opacity: 0.35; box-shadow: none; }
+.ox button.picked { opacity: 1; border-color: currentColor; }
+
+.verdict { border-radius: 12px; padding: 16px 20px; display: grid; gap: 10px; }
+.verdict.good { background: var(--good-soft); }
+.verdict.bad { background: var(--bad-soft); }
+.verdict .v { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.verdict.good .v { color: var(--good); }
+.verdict.bad .v { color: var(--bad); }
+.verdict .ans { font-size: 14px; color: var(--ink); font-weight: 400; }
+.expl { font-family: var(--mincho); font-size: 16px; margin: 0; white-space: pre-line; }
+.fig { margin: 0; background: #fff; border: 1px solid var(--rule); border-radius: 8px; padding: 8px; overflow-x: auto; }
+.fig img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.qnote { font-size: 13px; color: var(--ink-soft); margin: 0; }
+.oxnote { font-size: 13px; color: var(--accent); margin: 0; font-weight: 700; }
+.expl .judge { font-family: var(--gothic); font-weight: 700; margin-right: 6px; }
+.judge.t { color: var(--good); }
+.judge.f { color: var(--bad); }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.primary { background: var(--accent); color: var(--surface); border: none; border-radius: 10px; padding: 12px 24px; font-weight: 700; min-height: 48px; flex: 1 1 200px; }
+.secondary { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 18px; min-height: 48px; }
+
+/* 本番5択 */
+.choices { display: grid; gap: 10px; }
+.choice { font-family: var(--mincho); font-size: 16px; display: grid; grid-template-columns: 28px 1fr; gap: 4px; }
+.choice .lb { font-family: var(--gothic); font-weight: 700; color: var(--accent); }
+.choice .ctxs { grid-column: 2; font-size: 14px; color: var(--ink-soft); }
+.opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.opts button { border: 2px solid var(--rule); background: var(--surface); border-radius: 10px; min-height: 64px; display: grid; gap: 2px; place-items: center; padding: 6px 2px; }
+.opts button b { font-size: 20px; font-variant-numeric: tabular-nums; }
+.opts button span { font-size: 13px; color: var(--ink-soft); }
+.opts button.right { border-color: var(--good); background: var(--good-soft); }
+.opts button.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opts button:disabled { cursor: default; }
+.explist { display: grid; gap: 12px; }
+.summary { font-family: var(--mincho); margin: 0; font-weight: 700; }
+
+/* 元のページ */
+.pages { display: grid; gap: 12px; }
+.pages figure { margin: 0; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: #fff; }
+.pages img { display: block; width: 100%; height: auto; }
+.pages figcaption { font-size: 12px; color: #55646e; padding: 4px 10px; background: #f2f4f3; }
+
+/* セット */
+.sets { display: grid; gap: 12px; }
+.sec-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.sec-h h2 { font-size: 18px; margin: 0; }
+.legend { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-soft); margin-left: auto; }
+.legend b { font-family: var(--mincho); margin-left: 8px; }
+.label.inline { margin: 0; align-self: center; }
+.setgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 12px; }
+.set { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 16px; display: grid; gap: 12px; box-shadow: var(--shadow); align-content: start; }
+.set-top { display: flex; align-items: baseline; gap: 10px; }
+.set-top h3 { margin: 0; font-size: 17px; }
+.set-top .range { font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.marks { display: flex; flex-wrap: wrap; gap: 2px 10px; font-family: var(--mincho); font-size: 18px; line-height: 1.4; font-weight: 700; }
+.marks.big { justify-content: center; font-size: 22px; }
+.ok { color: var(--accent); }
+.ng { color: var(--bad); }
+.yet { color: var(--ink-soft); opacity: 0.5; font-weight: 400; }
+.set-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; }
+.set-stats div { display: grid; }
+.set-stats dt { font-size: 11px; color: var(--ink-soft); letter-spacing: 0.06em; }
+.set-stats dd { margin: 0; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.set-actions { display: flex; gap: 8px; }
+.set-actions .primary { flex: 1 1 auto; }
+.secondary:disabled { opacity: 0.45; cursor: default; }
+.set-tag { background: var(--accent-soft); border-color: transparent; color: var(--accent); font-weight: 700; }
+.done .label { margin: 0; }
+
+/* 合言葉・更新のお知らせ */
+.lock { margin-top: 32px; }
+.lock h1 { margin: 0; font-size: 22px; }
+.lock p { margin: 0; }
+.pass { font: inherit; font-size: 18px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); }
+.update { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 20; max-width: 688px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; padding: 12px 16px; box-shadow: var(--shadow); font-weight: 700; }
+.update .primary { flex: 0 0 auto; }
+
+.done { text-align: center; padding: 32px 20px; }
+.done b { font-size: 40px; font-variant-numeric: tabular-nums; display: block; }
+.empty { color: var(--ink-soft); font-size: 14px; }
+.note { font-size: 12px; color: var(--ink-soft); }
+
+@media (max-width: 480px) {
+  .stmt { font-size: 17px; }
+  .opts { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .opts button span { font-size: 11px; }
+  .card { padding: 16px; }
+  .brand small { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <div class="brand">調査士 択一ドリル<small>択一の王子より</small></div>
+  <span class="sync" id="sync">記録：この端末</span>
+  <button class="ghost" id="homeBtn" hidden>やめる</button>
+</div></header>
+<main class="wrap" id="app"></main>
+
+<script>
+(() => {
+  let QUESTIONS = [];
+  const FIELDS = [
+    { key: "民法", code: "A" },
+    { key: "調査士法", code: "B" },
+    { key: "登記", code: "C" },
+  ];
+  const appEl = document.getElementById("app");
+  const app = { replaceChildren: (...kids) => appEl.replaceChildren(...kids.flat().filter(k => k != null && k !== false)) };
+  const homeBtn = document.getElementById("homeBtn");
+  const syncEl = document.getElementById("sync");
+
+  // ---------- 記録 ----------
+  // rec[key] = { a: 解いた回数, w: 間違えた回数, last: 1|0, t: 時刻 }
+  // key: "A-1-1/ア"（1肢）・"A-1-1"（5択）
+  const LS_KEY = "chousashi-drill-rec-v1";
+  let rec = {};
+  try { rec = JSON.parse(localStorage.getItem(LS_KEY) || "{}") || {}; } catch (e) { rec = {}; }
+  let dbRef = null, saveTimer = null, saving = Promise.resolve();
+
+  function saveLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(rec)); } catch (e) {} }
+  function scheduleSave() {
+    saveLocal();
+    if (!dbRef) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      const body = { rec: JSON.parse(JSON.stringify(rec)) };
+      saving = saving.then(() => dbRef.set(body)).then(
+        () => { syncEl.textContent = "記録：同期済み"; },
+        () => { syncEl.textContent = "記録：この端末のみ（同期できず）"; }
+      );
+    }, 800);
+  }
+  function mark(key, ok) {
+    const r = rec[key] || { a: 0, w: 0, last: 1, t: 0 };
+    r.a += 1; if (!ok) r.w += 1; r.last = ok ? 1 : 0; r.t = Date.now();
+    rec[key] = r;
+    scheduleSave();
+  }
+  function mergeRemote(remote) {
+    let changed = false;
+    for (const [k, v] of Object.entries(remote || {})) {
+      if (!rec[k] || (v && v.t > rec[k].t)) { rec[k] = v; changed = true; }
+    }
+    return changed;
+  }
+
+  // ---------- 暗号化データの読み込み ----------
+  // data.bin・pages/*.bin・figs/*.bin は「先頭12バイト＝IV、残り＝AES-GCMの暗号文」
+  const enc = new TextEncoder();
+  const idb = (mode, fn) => new Promise((res, rej) => {
+    const r = indexedDB.open("chousashi-drill", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("kv");
+    r.onsuccess = () => {
+      const tx = r.result.transaction("kv", mode), q = fn(tx.objectStore("kv"));
+      tx.oncomplete = () => res(q && q.result);
+      tx.onerror = () => rej(tx.error);
+    };
+    r.onerror = () => rej(r.error);
+  });
+  const getKey = () => idb("readonly", st => st.get("key")).catch(() => null);
+  const putKey = k => idb("readwrite", st => st.put(k, "key")).catch(() => {});
+  async function deriveKey(pass, cfg) {
+    const base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
+    const salt = Uint8Array.from(atob(cfg.salt), ch => ch.charCodeAt(0));
+    return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: cfg.iter, hash: "SHA-256" },
+      base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  }
+  async function decryptFile(path, key) {
+    const res = await fetch(path);
+    if (!res.ok) throw new Error("fetch " + path);
+    const buf = new Uint8Array(await res.arrayBuffer());
+    return crypto.subtle.decrypt({ name: "AES-GCM", iv: buf.slice(0, 12) }, key, buf.slice(12));
+  }
+  let KEY = null;
+  const blobUrls = {};
+  function encImg(path, alt) {
+    const img = el("img", { alt });
+    const bin = path.replace(/\.(png|jpg)$/, ".bin");
+    const type = path.endsWith(".png") ? "image/png" : "image/jpeg";
+    (blobUrls[bin] ? Promise.resolve(blobUrls[bin])
+      : decryptFile(bin, KEY).then(b => (blobUrls[bin] = URL.createObjectURL(new Blob([b], { type })))))
+      .then(u => { img.src = u; },
+        () => { img.replaceWith(el("p", { class: "note" }, "この画像はまだ端末に入っていない。ネットにつながっているときに一度開くと、次からは電波がなくても見られる。")); });
+    return img;
+  }
+
+  // ---------- 便利 ----------
+  const el = (tag, attrs = {}, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") n.className = v;
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else if (v === true) n.setAttribute(k, "");
+      else if (v !== false && v != null) n.setAttribute(k, v);
+    }
+    for (const c of kids.flat()) if (c != null && c !== false) n.append(c);
+    return n;
+  };
+  const yearText = y => {
+    const m = /^([SHR])(元|\d+)-(\d+)$/.exec(y);
+    if (!m) return y;
+    const era = { S: "昭和", H: "平成", R: "令和" }[m[1]];
+    return `${era}${m[2]}年度 第${m[3]}問`;
+  };
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const fieldOf = q => q.field;
+
+  // ---------- 設定 ----------
+  const settings = { field: "民法", level: "すべて", order: "出題順" };
+  try { Object.assign(settings, JSON.parse(localStorage.getItem("chousashi-drill-settings") || "{}")); } catch (e) {}
+  const saveSettings = () => { try { localStorage.setItem("chousashi-drill-settings", JSON.stringify(settings)); } catch (e) {} };
+
+  const pool = () => QUESTIONS.filter(q => fieldOf(q) === settings.field && (settings.level === "すべて" || q.level === settings.level));
+  const items = qs => qs.flatMap(q => q.choices.map(c => ({ q, c, key: `${q.id}/${c.label}` })));
+  const wrongItems = () => items(QUESTIONS).filter(it => rec[it.key] && rec[it.key].last === 0);
+
+  // ---------- セット（1肢○×を10肢ずつ） ----------
+  const SET_SIZE = 10;
+  function setsOf(field) {
+    const its = items(QUESTIONS.filter(q => q.field === field));
+    const out = [];
+    for (let i = 0; i < its.length; i += SET_SIZE) {
+      const no = out.length + 1;
+      const part = its.slice(i, i + SET_SIZE);
+      const topics = [...new Set(part.map(it => it.q.topic))];
+      out.push({ field, no, key: `set/${field}/${no}`, items: part, base: topics.join("・") });
+    }
+    // 同じ名前が続くときだけ（1）（2）を付ける
+    const total = {}, seen = {};
+    out.forEach(x => { total[x.base] = (total[x.base] || 0) + 1; });
+    out.forEach(x => { seen[x.base] = (seen[x.base] || 0) + 1; x.name = total[x.base] > 1 ? `${x.base}（${seen[x.base]}）` : x.base; });
+    return out;
+  }
+  function setStats(s) {
+    const tried = s.items.filter(it => rec[it.key]);
+    return {
+      tried: tried.length,
+      right: tried.filter(it => rec[it.key].last === 1).length,
+      wrong: s.items.filter(it => rec[it.key] && rec[it.key].last === 0),
+      runs: rec[s.key] || null,
+    };
+  }
+  const pct = (a, b) => b ? Math.round(a / b * 100) + "%" : "–";
+  const rangeText = its => its[0].q.id === its.at(-1).q.id ? its[0].q.id : `${its[0].q.id}〜${its.at(-1).q.id}`;
+  const itemRow = it => el("div", { class: "row" },
+    el("span", { class: "id" }, `${it.q.id} ${it.c.label}`),
+    el("span", { class: "t" }, it.c.text.length > 46 ? it.c.text.slice(0, 46) + "…" : it.c.text));
+
+  function setCard(s) {
+    const st = setStats(s), r = st.runs, short = SET_SIZE - s.items.length;
+    return el("article", { class: "set" },
+      el("div", { class: "set-top" },
+        el("h3", {}, s.name),
+        el("span", { class: "range" }, rangeText(s.items))),
+      el("div", { class: "marks", role: "img", "aria-label": `${s.items.length}肢中 ${st.tried}肢解いて ${st.right}肢正解` },
+        s.items.map(it => { const x = rec[it.key]; return x ? el("span", { class: x.last ? "ok" : "ng" }, x.last ? "○" : "×") : el("span", { class: "yet" }, "–"); })),
+      el("dl", { class: "set-stats" },
+        el("div", {}, el("dt", {}, "正答率"), el("dd", {}, pct(st.right, st.tried))),
+        el("div", {}, el("dt", {}, "前回"), el("dd", {}, r ? `${r.last}/${r.size}` : "–")),
+        el("div", {}, el("dt", {}, "最高"), el("dd", {}, r ? `${r.best}/${r.size}` : "–")),
+        el("div", {}, el("dt", {}, "回数"), el("dd", {}, `${r ? r.n : 0}回`))),
+      short ? el("p", { class: "note" }, `まだ${s.items.length}肢。問題を足すと10肢まで埋まる`) : null,
+      el("div", { class: "set-actions" },
+        el("button", { class: "primary", onclick: () => startOX(s.items, { set: s }) }, r ? "もう一度解く" : "解く"),
+        el("button", { class: "secondary", disabled: !st.wrong.length, onclick: () => startOX(st.wrong, { set: s, review: true }) }, `間違い帳 ${st.wrong.length}`)));
+  }
+
+  // ---------- ホーム ----------
+  let view = "home";
+  function renderHome() {
+    view = "home"; homeBtn.hidden = true; keyHandler = null;
+    const all = items(QUESTIONS);
+    const tried = all.filter(it => rec[it.key]);
+    const right = tried.filter(it => rec[it.key].last === 1).length;
+    const wrong = wrongItems();
+    const p = pool();
+    const sets = setsOf(settings.field);
+
+    const chipRow = (name, values, disabledFn) => el("div", { class: "chips", role: "group", "aria-label": name },
+      values.map(v => el("button", {
+        class: "chip", "aria-pressed": settings[name] === v ? "true" : "false",
+        disabled: disabledFn ? disabledFn(v) : false,
+        onclick: () => { settings[name] = v; saveSettings(); renderHome(); }
+      }, v)));
+
+    app.replaceChildren(
+      el("section", { class: "hero" },
+        el("h1", {}, "土地家屋調査士 過去問"),
+        el("p", {}, `収録 ${QUESTIONS.length}問（1肢にすると${all.length}肢）・試作版`)),
+      el("div", { class: "stats" },
+        el("div", { class: "stat" }, el("b", {}, String(tried.length)), el("span", {}, "解いた肢")),
+        el("div", { class: "stat" }, el("b", {}, pct(right, tried.length)), el("span", {}, "直近の正答率")),
+        el("div", { class: "stat" }, el("b", {}, String(wrong.length)), el("span", {}, "間違い帳"))),
+      el("section", {},
+        el("p", { class: "label" }, "分野"),
+        chipRow("field", FIELDS.map(f => f.key), v => !QUESTIONS.some(q => q.field === v))),
+      el("section", { class: "sets" },
+        el("div", { class: "sec-h" },
+          el("h2", {}, "1肢ずつ ○×"),
+          el("span", { class: "note" }, `10肢ずつ・${settings.field} ${sets.length}組`),
+          el("span", { class: "legend" }, el("b", { class: "ok" }, "○"), "正解", el("b", { class: "ng" }, "×"), "間違い", el("b", { class: "yet" }, "–"), "まだ")),
+        el("div", { class: "chips" }, chipRow("order", ["出題順", "ランダム"])),
+        el("div", { class: "setgrid" }, sets.map(setCard))),
+      el("section", { class: "modes" },
+        el("div", { class: "sec-h" }, el("h2", {}, "ほかの解き方")),
+        el("div", { class: "chips" }, el("span", { class: "label inline" }, "5択の難しさ"), chipRow("level", ["すべて", "基本", "応用"])),
+        el("button", { class: "mode", disabled: !p.length, onclick: () => startExam(p) },
+          el("span", { class: "mk" }, "5"),
+          el("span", {}, el("h2", {}, "本番形式 5択"), el("p", {}, "本と同じ形で解く")),
+          el("span", { class: "count" }, `${p.length}問`)),
+        el("button", { class: "mode", disabled: !wrong.length, onclick: () => startOX(wrongItems(), { review: true }) },
+          el("span", { class: "mk" }, "復"),
+          el("span", {}, el("h2", {}, "間違い帳（全部）"), el("p", {}, "すべての組の、最後に間違えた肢。正解すると帳から消える")),
+          el("span", { class: "count" }, `${wrong.length}肢`))),
+      wrong.length ? el("section", {},
+        el("p", { class: "label" }, "間違い帳の中身"),
+        el("div", { class: "list" }, wrong.map(itemRow))) : null,
+      el("p", { class: "note" }, "問題文と解説は「択一の王子」から写したもの。おかしな所があれば、その問題の「元のページ」で確かめられる。")
+    );
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- 元のページ ----------
+  function pagesBlock(q) {
+    const box = el("div", { class: "pages", hidden: true });
+    const btn = el("button", { class: "secondary", onclick: () => {
+      if (!box.childElementCount) {
+        const all = [...q.pages.problem.map(p => [p, "問題"]), ...q.pages.explanation.map(p => [p, "解説"])];
+        all.forEach(([p, kind]) => box.append(el("figure", {},
+          encImg(`pages/p${String(p).padStart(3, "0")}.jpg`, `${q.id} ${kind}のページ`),
+          el("figcaption", {}, `${kind}のページ（本の${p + 7}ページ）`))));
+      }
+      box.hidden = !box.hidden;
+      btn.textContent = box.hidden ? "元のページを見る" : "元のページを閉じる";
+    } }, "元のページを見る");
+    return { btn, box };
+  }
+
+  const qhead = (q, idx, total, label) => [
+    el("div", { class: "qhead" },
+      label ? el("span", { class: "tag set-tag" }, label) : null,
+      el("span", { class: "no" }, q.id),
+      el("span", {}, `${q.field}・${q.topic}`),
+      el("span", { class: "tag" }, q.level),
+      el("span", {}, yearText(q.year)),
+      el("span", { class: "progress" }, `${idx + 1} / ${total}`)),
+    el("div", { class: "bar" }, el("i", { style: `width:${(idx / total) * 100}%` }))
+  ];
+
+  // ---------- 1肢○× ----------
+  function startOX(list, opts = {}) {
+    if (settings.order === "ランダム" || opts.review) list = shuffle(list);
+    const run = { list, i: 0, ok: 0, missed: [], set: opts.set || null, review: !!opts.review };
+    view = "ox"; homeBtn.hidden = false;
+    showOX(run);
+  }
+  function showOX(run) {
+    if (run.i >= run.list.length) return run.set ? finishSet(run) : finish(run.ok, run.list.length, "肢");
+    const it = run.list[run.i], { q, c, key } = it;
+    const label = run.set ? `${run.set.name}${run.review ? "・間違い帳" : ""}` : (run.review ? "間違い帳" : null);
+    let answered = false;
+    const btnO = el("button", { class: "o", "aria-label": "正しい（○）", onclick: () => answer(true) }, "○");
+    const btnX = el("button", { class: "x", "aria-label": "誤り（×）", onclick: () => answer(false) }, "×");
+    const result = el("div", { "aria-live": "polite" });
+
+    function answer(saysTrue) {
+      if (answered) return; answered = true;
+      const ok = saysTrue === c.correct;
+      if (ok) run.ok++; else run.missed.push(it);
+      mark(key, ok);
+      btnO.disabled = btnX.disabled = true;
+      (saysTrue ? btnO : btnX).classList.add("picked");
+      const pg = pagesBlock(q);
+      const next = el("button", { class: "primary", onclick: () => { run.i++; showOX(run); } }, run.i + 1 < run.list.length ? "次へ" : "結果を見る");
+      result.replaceChildren(
+        el("div", { class: `verdict ${ok ? "good" : "bad"}` },
+          el("div", { class: "v" }, ok ? "正解" : "不正解",
+            el("span", { class: "ans" }, `この肢は「${c.correct ? "正しい（○）" : "誤り（×）"}」`)),
+          el("p", { class: "expl" },
+            el("span", { class: `judge ${c.correct ? "t" : "f"}` }, c.correct ? "正しい。" : "誤り。"), c.explanation),
+          c.figure ? el("figure", { class: "fig" }, encImg(c.figure, `${q.id} ${c.label}の解説の図`)) : null,
+          q.note ? el("p", { class: "qnote" }, q.note) : null),
+        el("div", { class: "actions" }, next, pg.btn), pg.box);
+      next.focus({ preventScroll: true });
+    }
+
+    app.replaceChildren(
+      ...qhead(q, run.i, run.list.length, label),
+      el("article", { class: "card" },
+        el("p", { class: "stem" }, q.stem),
+        q.oxNote ? el("p", { class: "oxnote" }, q.oxNote) : null,
+        c.context ? el("p", { class: "ctx" }, el("b", {}, "教授"), c.context) : null,
+        el("p", { class: "stmt" }, el("span", { class: "lb" }, c.label), c.context ? el("b", {}, "学生") : null, c.text)),
+      el("div", { class: "ox" }, btnO, btnX),
+      result);
+    keyHandler = e => {
+      if (!answered && (e.key === "o" || e.key === "1")) answer(true);
+      else if (!answered && (e.key === "x" || e.key === "2")) answer(false);
+      else if (answered && e.key === "Enter") { run.i++; showOX(run); }
+    };
+    window.scrollTo(0, 0);
+  }
+
+  function finishSet(run) {
+    keyHandler = null; view = "done"; homeBtn.hidden = true;
+    const s = run.set, total = run.list.length;
+    if (!run.review) {
+      const prev = rec[s.key];
+      const best = prev && prev.size === total ? Math.max(prev.best, run.ok) : run.ok;
+      rec[s.key] = { n: (prev ? prev.n : 0) + 1, last: run.ok, best, size: total, t: Date.now() };
+      scheduleSave();
+    }
+    const sets = setsOf(s.field);
+    const cur = sets.find(x => x.no === s.no) || s;
+    const nextSet = sets.find(x => x.no === s.no + 1);
+    const st = setStats(cur), r = rec[s.key];
+    app.replaceChildren(
+      el("section", { class: "card done" },
+        el("p", { class: "label" }, `${s.field}・${cur.name}${run.review ? "・間違い帳" : ""}`),
+        el("b", {}, `${run.ok} / ${total}`),
+        el("p", {}, `正答率 ${pct(run.ok, total)}` + (!run.review && r && r.n > 1 ? `・最高 ${r.best}/${r.size}・${r.n}回目` : "")),
+        el("div", { class: "marks big" }, cur.items.map(it => { const x = rec[it.key]; return x ? el("span", { class: x.last ? "ok" : "ng" }, x.last ? "○" : "×") : el("span", { class: "yet" }, "–"); })),
+        el("p", { class: "note" }, st.wrong.length ? `この組の間違い帳：${st.wrong.length}肢` : "この組の間違い帳は空になった"),
+        el("div", { class: "actions" },
+          el("button", { class: "primary", onclick: () => startOX(cur.items, { set: cur }) }, "もう一度"),
+          st.wrong.length ? el("button", { class: "secondary", onclick: () => startOX(st.wrong, { set: cur, review: true }) }, `間違い帳 ${st.wrong.length}`) : null,
+          nextSet ? el("button", { class: "secondary", onclick: () => startOX(nextSet.items, { set: nextSet }) }, `次へ：${nextSet.name}`) : null,
+          el("button", { class: "secondary", onclick: renderHome }, "最初の画面へ"))),
+      run.missed.length ? el("section", {},
+        el("p", { class: "label" }, "今回間違えた肢"),
+        el("div", { class: "list" }, run.missed.map(itemRow))) : null);
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- 本番5択 ----------
+  function startExam(qs) {
+    if (settings.order === "ランダム") qs = shuffle(qs);
+    const run = { list: qs, i: 0, ok: 0 };
+    view = "exam"; homeBtn.hidden = false;
+    showExam(run);
+  }
+  function showExam(run) {
+    if (run.i >= run.list.length) return finish(run.ok, run.list.length, "問");
+    const q = run.list[run.i];
+    let answered = false;
+    const result = el("div", { "aria-live": "polite" });
+    const optBtns = q.options.map((combo, k) => el("button", { onclick: () => answer(k + 1) },
+      el("b", {}, String(k + 1)), q.type === "single" ? null : el("span", {}, combo)));
+
+    function answer(n) {
+      if (answered) return; answered = true;
+      const ok = n === q.answer;
+      if (ok) run.ok++;
+      mark(q.id, ok);
+      optBtns.forEach((b, k) => { b.disabled = true; if (k + 1 === q.answer) b.classList.add("right"); else if (k + 1 === n) b.classList.add("wrong"); });
+      const pg = pagesBlock(q);
+      const next = el("button", { class: "primary", onclick: () => { run.i++; showExam(run); } }, run.i + 1 < run.list.length ? "次の問題へ" : "結果を見る");
+      result.replaceChildren(
+        el("div", { class: `verdict ${ok ? "good" : "bad"}` },
+          el("div", { class: "v" }, ok ? "正解" : "不正解", el("span", { class: "ans" }, q.type === "single" ? `正解は ${q.answer}` : `正解は ${q.answer}（${q.options[q.answer - 1]}）`)),
+          el("div", { class: "explist" }, q.choices.map(c => el("p", { class: "expl" },
+            el("span", { class: "judge" }, c.label + " "),
+            el("span", { class: `judge ${c.correct ? "t" : "f"}` }, c.correct ? "正しい。" : "誤り。"), c.explanation,
+            c.figure && c === q.choices.find(x => x.figure === c.figure) ? el("figure", { class: "fig" }, encImg(c.figure, `${q.id}の解説の図`)) : null))),
+          q.summary ? el("p", { class: "summary" }, q.summary) : null,
+          q.note ? el("p", { class: "qnote" }, q.note) : null),
+        el("div", { class: "actions" }, next, pg.btn), pg.box);
+      next.focus({ preventScroll: true });
+    }
+
+    app.replaceChildren(
+      ...qhead(q, run.i, run.list.length),
+      el("article", { class: "card" },
+        el("p", { class: "stmt stem-exam", style: "font-size:16px" }, q.stem),
+        el("div", { class: "choices" }, q.choices.map(c => el("div", { class: "choice" },
+          el("span", { class: "lb" }, c.label),
+          el("span", {}, c.context ? el("span", { class: "ctxs" }, "教授：" + c.context, el("br")) : null, c.text))))),
+      el("div", { class: "opts", role: "group", "aria-label": "答えの番号" }, optBtns),
+      result);
+    keyHandler = e => {
+      if (!answered && /^[1-5]$/.test(e.key)) answer(Number(e.key));
+      else if (answered && e.key === "Enter") { run.i++; showExam(run); }
+    };
+    window.scrollTo(0, 0);
+  }
+
+  function finish(ok, total, unit) {
+    keyHandler = null;
+    app.replaceChildren(
+      el("section", { class: "card done" },
+        el("b", {}, `${ok} / ${total}`),
+        el("p", {}, `${total}${unit}中 ${ok}${unit}正解（${Math.round(ok / total * 100)}%）`),
+        el("div", { class: "actions" }, el("button", { class: "primary", onclick: renderHome }, "最初の画面へ"))));
+    homeBtn.hidden = true; view = "done";
+    window.scrollTo(0, 0);
+  }
+
+  let keyHandler = null;
+  document.addEventListener("keydown", e => {
+    if (e.target.closest && e.target.closest("input, textarea")) return;
+    if (e.key === "Enter" && e.target.tagName === "BUTTON") return; // ボタン自身の決定と二重にならないように
+    if (keyHandler) keyHandler(e);
+  });
+  homeBtn.addEventListener("click", () => { keyHandler = null; renderHome(); });
+  // ---------- 起動 ----------
+  function lockScreen() {
+    homeBtn.hidden = true;
+    const input = el("input", { id: "pass", type: "password", autocomplete: "current-password", class: "pass", placeholder: "合言葉", "aria-label": "合言葉" });
+    const err = el("p", { class: "note", "aria-live": "polite" });
+    const go = async () => {
+      if (!input.value.trim()) return;
+      err.textContent = "確かめています…";
+      try {
+        const cfg = await (await fetch("config.json")).json();
+        const k = await deriveKey(input.value.trim(), cfg);
+        const data = await decryptFile("data.bin", k);
+        KEY = k; await putKey(k);
+        start(data);
+      } catch (e) {
+        err.textContent = navigator.onLine === false ? "最初の1回は、ネットにつながった状態で開いてください。" : "合言葉が違います。もう一度入れてください。";
+      }
+    };
+    input.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    app.replaceChildren(el("section", { class: "card lock" },
+      el("h1", {}, "調査士 択一ドリル"),
+      el("p", {}, "最初の1回だけ、合言葉を入れてください。この端末では次から自動で開きます。"),
+      input, el("button", { class: "primary", onclick: go }, "開く"), err));
+  }
+  function start(buf) {
+    QUESTIONS = JSON.parse(new TextDecoder().decode(buf));
+    renderHome();
+  }
+  (async () => {
+    try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+    KEY = await getKey();
+    if (KEY) {
+      try { start(await decryptFile("data.bin", KEY)); return; } catch (e) { KEY = null; }
+    }
+    lockScreen();
+  })();
+
+  // ---------- 更新（新しい問題が届いたら知らせる） ----------
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      const offer = w => {
+        if (document.querySelector(".update")) return;
+        document.body.append(el("div", { class: "update", role: "status" },
+          el("span", {}, "新しい問題が届きました"),
+          el("button", { class: "primary", onclick: () => w.postMessage("skip") }, "反映する")));
+      };
+      if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
+      reg.addEventListener("updatefound", () => {
+        const w = reg.installing;
+        if (w) w.addEventListener("statechange", () => { if (w.state === "installed" && navigator.serviceWorker.controller) offer(w); });
+      });
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+    }).catch(() => {});
+    let reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (!reloading) { reloading = true; location.reload(); } });
+  }
+})();
+</script>
+</body>
+</html>
