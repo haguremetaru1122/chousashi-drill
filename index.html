@@ -546,7 +546,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
           el("div", { class: "v" }, ok ? "正解" : "不正解",
             el("span", { class: "ans" }, `この肢は「${c.correct ? "正しい（○）" : "誤り（×）"}」`)),
           el("p", { class: "expl" },
-            el("span", { class: `judge ${c.correct ? "t" : "f"}` }, c.correct ? "正しい。" : "誤り。"), c.explanation),
+            el("span", { class: `judge ${c.correct ? "t" : "f"}` }, c.correct ? "正しい。" : "誤り。"), c.explanation || q.explanation),
           c.figure ? el("figure", { class: "fig" }, encImg(c.figure, `${q.id} ${c.label}の解説の図`)) : null,
           q.note ? el("p", { class: "qnote" }, q.note) : null),
         el("div", { class: "actions" }, next, pg.btn), pg.box);
@@ -557,6 +557,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       ...qhead(q, run.i, run.list.length, label),
       el("article", { class: "card" },
         el("p", { class: "stem" }, q.stem),
+        q.stemFigure ? el("figure", { class: "fig" }, encImg(q.stemFigure, `${q.id}の問題の図`)) : null,
         q.oxNote ? el("p", { class: "oxnote" }, q.oxNote) : null,
         c.context ? el("p", { class: "ctx" }, el("b", {}, "教授"), c.context) : null,
         el("p", { class: "stmt" }, el("span", { class: "lb" }, c.label), c.context ? el("b", {}, "学生") : null, c.text)),
@@ -627,10 +628,11 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       result.replaceChildren(
         el("div", { class: `verdict ${ok ? "good" : "bad"}` },
           el("div", { class: "v" }, ok ? "正解" : "不正解", el("span", { class: "ans" }, q.type === "single" ? `正解は ${q.answer}` : `正解は ${q.answer}（${q.options[q.answer - 1]}）`)),
-          el("div", { class: "explist" }, q.choices.map(c => el("p", { class: "expl" },
+          el("div", { class: "explist" }, q.choices.filter(c => c.explanation).map(c => el("p", { class: "expl" },
             el("span", { class: "judge" }, c.label + " "),
             el("span", { class: `judge ${c.correct ? "t" : "f"}` }, c.correct ? "正しい。" : "誤り。"), c.explanation,
             c.figure && c === q.choices.find(x => x.figure === c.figure) ? el("figure", { class: "fig" }, encImg(c.figure, `${q.id}の解説の図`)) : null))),
+          q.explanation ? el("p", { class: "expl" }, q.explanation) : null,
           q.summary ? el("p", { class: "summary" }, q.summary) : null,
           q.note ? el("p", { class: "qnote" }, q.note) : null),
         el("div", { class: "actions" }, next, pg.btn), pg.box);
@@ -641,6 +643,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       ...qhead(q, run.i, run.list.length),
       el("article", { class: "card" },
         el("p", { class: "stmt stem-exam", style: "font-size:16px" }, q.stem),
+        q.stemFigure ? el("figure", { class: "fig" }, encImg(q.stemFigure, `${q.id}の問題の図`)) : null,
         el("div", { class: "choices" }, q.choices.map(c => el("div", { class: "choice" },
           el("span", { class: "lb" }, c.label),
           el("span", {}, c.context ? el("span", { class: "ctxs" }, "教授：" + c.context, el("br")) : null, c.text))))),
