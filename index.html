@@ -708,13 +708,14 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   })();
 
   // ---------- 更新（新しい問題が届いたら知らせる） ----------
+  let wantReload = false;
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").then(reg => {
       const offer = w => {
         if (document.querySelector(".update")) return;
         document.body.append(el("div", { class: "update", role: "status" },
           el("span", {}, "新しい問題が届きました"),
-          el("button", { class: "primary", onclick: () => w.postMessage("skip") }, "反映する")));
+          el("button", { class: "primary", onclick: () => { wantReload = true; w.postMessage("skip"); } }, "反映する")));
       };
       if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
       reg.addEventListener("updatefound", () => {
@@ -723,8 +724,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       });
       document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
     }).catch(() => {});
-    let reloading = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => { if (!reloading) { reloading = true; location.reload(); } });
+    // 「反映する」を押したときだけ読み込み直す（初めて開いたときに勝手に読み込み直さない）
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (wantReload) { wantReload = false; location.reload(); } });
   }
 })();
 </script>
