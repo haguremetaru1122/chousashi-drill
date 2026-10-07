@@ -1,6 +1,6 @@
 // 調査士 択一ドリル：オフライン用
 // 版が変わると新しい一式を取り込み、画面に「新しい問題が届きました」を出す
-const VERSION = "34095943ceb4";
+const VERSION = "d0c07c2a035c";
 const CORE = ["./", "index.html", "manifest.webmanifest", "config.json", "data.bin", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "figs/A-5-4-e.bin", "figs/A-6-1-table.bin"];
 const CORE_CACHE = "core-" + VERSION;
 const PAGE_CACHE = "pages";

@@ -288,6 +288,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   function saveLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(rec)); } catch (e) {} }
   function scheduleSave() {
     saveLocal();
+    if (SYNC) syncSoon();
     if (!dbRef) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
@@ -670,6 +671,54 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
     if (keyHandler) keyHandler(e);
   });
   homeBtn.addEventListener("click", () => { keyHandler = null; renderHome(); });
+  // ---------- 記録の同期（GitHubの自分専用の置き場所 records.json） ----------
+  // 端末の記録とネットの記録を、肢ごとに「新しく解いたほう」でそろえる
+  let SYNC = null, syncing = false, syncAgain = false, syncTimer = null;
+  const b64enc = str => { let bin = ""; enc.encode(str).forEach(b => { bin += String.fromCharCode(b); }); return btoa(bin); };
+  const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), ch => ch.charCodeAt(0)));
+  const hhmm = () => { const d = new Date(); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`; };
+  function gh(method, body) {
+    return fetch(`https://api.github.com/repos/${SYNC.repo}/contents/${SYNC.path}`, {
+      method, cache: "no-store",
+      headers: Object.assign({ Authorization: "Bearer " + SYNC.token, Accept: "application/vnd.github+json" },
+        body ? { "Content-Type": "application/json" } : {}),
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+  async function syncNow() {
+    if (!SYNC) return;
+    if (syncing) { syncAgain = true; return; }
+    if (navigator.onLine === false) { syncEl.textContent = "記録：この端末（電波なし）"; return; }
+    syncing = true;
+    syncEl.textContent = "記録：同期中…";
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const r = await gh("GET");
+        if (!r.ok) throw new Error("get " + r.status);
+        const j = await r.json();
+        const remote = JSON.parse(b64dec(j.content)).rec || {};
+        const changed = mergeRemote(remote);
+        saveLocal();
+        if (changed && view === "home") renderHome();
+        const needPush = Object.keys(rec).some(k => !remote[k] || remote[k].t < rec[k].t);
+        if (!needPush) break;
+        const put = await gh("PUT", { message: "記録を更新", content: b64enc(JSON.stringify({ rec })), sha: j.sha });
+        if (put.ok) break;
+        if (put.status !== 409 && put.status !== 422) throw new Error("put " + put.status);
+        // ほかの端末が先に書いた → 読み直して合わせてから書く
+      }
+      syncEl.textContent = `記録：同期済み ${hhmm()}`;
+    } catch (e) {
+      syncEl.textContent = navigator.onLine === false ? "記録：この端末（電波なし）" : "記録：同期できず（あとでもう一度）";
+    } finally {
+      syncing = false;
+      if (syncAgain) { syncAgain = false; syncNow(); }
+    }
+  }
+  function syncSoon() { clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, 4000); }
+  window.addEventListener("online", () => syncNow());
+  document.addEventListener("visibilitychange", () => syncNow());
+
   // ---------- 起動 ----------
   function lockScreen() {
     homeBtn.hidden = true;
@@ -695,8 +744,11 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       input, el("button", { class: "primary", onclick: go }, "開く"), err));
   }
   function start(buf) {
-    QUESTIONS = JSON.parse(new TextDecoder().decode(buf));
+    const d = JSON.parse(new TextDecoder().decode(buf));
+    QUESTIONS = Array.isArray(d) ? d : d.q;
+    SYNC = Array.isArray(d) ? null : (d.sync || null);
     renderHome();
+    syncNow();
   }
   (async () => {
     try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
