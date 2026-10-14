@@ -619,15 +619,16 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 
     function answer(n) {
       if (answered) return; answered = true;
-      const ok = n === q.answer;
+      const rights = q.answers || [q.answer];  // 本で正解が2つある問題（C-3-9 など）は answers に並べる
+      const ok = rights.includes(n);
       if (ok) run.ok++;
       mark(q.id, ok);
-      optBtns.forEach((b, k) => { b.disabled = true; if (k + 1 === q.answer) b.classList.add("right"); else if (k + 1 === n) b.classList.add("wrong"); });
+      optBtns.forEach((b, k) => { b.disabled = true; if (rights.includes(k + 1)) b.classList.add("right"); else if (k + 1 === n) b.classList.add("wrong"); });
       const pg = pagesBlock(q);
       const next = el("button", { class: "primary", onclick: () => { run.i++; showExam(run); } }, run.i + 1 < run.list.length ? "次の問題へ" : "結果を見る");
       result.replaceChildren(
         el("div", { class: `verdict ${ok ? "good" : "bad"}` },
-          el("div", { class: "v" }, ok ? "正解" : "不正解", el("span", { class: "ans" }, q.type === "single" ? `正解は ${q.answer}` : `正解は ${q.answer}（${q.options[q.answer - 1]}）`)),
+          el("div", { class: "v" }, ok ? "正解" : "不正解", el("span", { class: "ans" }, "正解は " + rights.map(r => q.type === "single" ? String(r) : `${r}（${q.options[r - 1]}）`).join(" 又は "))),
           el("div", { class: "explist" }, q.choices.filter(c => c.explanation).map(c => el("p", { class: "expl" },
             el("span", { class: "judge" }, c.label + " "),
             el("span", { class: `judge ${c.correct ? "t" : "f"}` }, c.correct ? "正しい。" : "誤り。"), c.explanation,
