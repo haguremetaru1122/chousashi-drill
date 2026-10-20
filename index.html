@@ -380,7 +380,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   const saveSettings = () => { try { localStorage.setItem("chousashi-drill-settings", JSON.stringify(settings)); } catch (e) {} };
 
   const pool = () => QUESTIONS.filter(q => fieldOf(q) === settings.field && (settings.level === "すべて" || q.level === settings.level));
-  const items = qs => qs.flatMap(q => q.choices.map(c => ({ q, c, key: `${q.id}/${c.label}` })));
+  // noOx: 本で削除線が引かれた肢（法改正で条文が消えた等）は5択にだけ出し、1肢○×には出さない
+  const items = qs => qs.flatMap(q => q.choices.filter(c => !c.noOx).map(c => ({ q, c, key: `${q.id}/${c.label}` })));
   const wrongItems = () => items(QUESTIONS).filter(it => rec[it.key] && rec[it.key].last === 0);
 
   // ---------- セット（1肢○×を10肢ずつ） ----------
