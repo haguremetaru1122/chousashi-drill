@@ -387,16 +387,19 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   // ---------- セット（1肢○×を10肢ずつ） ----------
   const SET_SIZE = 10;
   function setsOf(field) {
-    const its = items(QUESTIONS.filter(q => q.field === field));
+    // noOx の肢も席だけは数えて区切る（外した肢のせいで後ろの組が1肢ずつずれないように。その組だけ9肢になる）
+    const its = QUESTIONS.filter(q => q.field === field).flatMap(q => q.choices.map(c => ({ q, c, key: `${q.id}/${c.label}` })));
     const out = [];
     for (let i = 0; i < its.length; i += SET_SIZE) {
       const no = out.length + 1;
-      const part = its.slice(i, i + SET_SIZE);
+      const part = its.slice(i, i + SET_SIZE).filter(it => !it.c.noOx);
+      if (!part.length) continue;
       const topics = [...new Set(part.map(it => it.q.topic))];
       out.push({ field, no, key: `set/${field}/${no}`, items: part, base: topics.join("・") });
     }
     // 同じ名前が続くときだけ（1）（2）を付ける
     const total = {}, seen = {};
+    out.forEach((x, i) => { x.last = i === out.length - 1; });
     out.forEach(x => { total[x.base] = (total[x.base] || 0) + 1; });
     out.forEach(x => { seen[x.base] = (seen[x.base] || 0) + 1; x.name = total[x.base] > 1 ? `${x.base}（${seen[x.base]}）` : x.base; });
     return out;
@@ -417,7 +420,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
     el("span", { class: "t" }, it.c.text.length > 46 ? it.c.text.slice(0, 46) + "…" : it.c.text));
 
   function setCard(s) {
-    const st = setStats(s), r = st.runs, short = SET_SIZE - s.items.length;
+    const st = setStats(s), r = st.runs, short = s.last && SET_SIZE - s.items.length;
     return el("article", { class: "set" },
       el("div", { class: "set-top" },
         el("h3", {}, s.name),
