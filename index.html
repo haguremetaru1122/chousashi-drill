@@ -148,8 +148,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 .ctx { font-family: var(--mincho); font-size: 15px; background: var(--paper); border-radius: 8px; padding: 12px 14px; margin: 0; }
 .ctx b, .stmt b { font-family: var(--gothic); font-size: 13px; color: var(--ink-soft); margin-right: 6px; }
 .stem-exam { white-space: pre-line; }
-.stmt { font-family: var(--mincho); font-size: 19px; line-height: 1.85; margin: 0; }
-.stmt .lb { font-family: var(--gothic); font-weight: 700; color: var(--accent); margin-right: 10px; }
+.stmt { font-family: var(--mincho); font-size: 19px; line-height: 1.85; margin: 0; white-space: pre-line; }
+.stmt .lb { font-family: var(--gothic); font-weight: 700; color: var(--accent); margin-right: 10px; white-space: nowrap; }
 
 .ox { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .ox button {
@@ -184,8 +184,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 
 /* 本番5択 */
 .choices { display: grid; gap: 10px; }
-.choice { font-family: var(--mincho); font-size: 16px; display: grid; grid-template-columns: 28px 1fr; gap: 4px; }
-.choice .lb { font-family: var(--gothic); font-weight: 700; color: var(--accent); }
+.choice { font-family: var(--mincho); font-size: 16px; display: grid; grid-template-columns: minmax(28px, max-content) 1fr; gap: 4px; white-space: pre-line; }
+.choice .lb { font-family: var(--gothic); font-weight: 700; color: var(--accent); white-space: nowrap; margin-right: 6px; }
 .choice .ctxs { grid-column: 2; font-size: 14px; color: var(--ink-soft); }
 .opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .opts button { border: 2px solid var(--rule); background: var(--surface); border-radius: 10px; min-height: 64px; display: grid; gap: 2px; place-items: center; padding: 6px 2px; }
