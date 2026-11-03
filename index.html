@@ -440,75 +440,10 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
         el("button", { class: "secondary", disabled: !st.wrong.length, onclick: () => startOX(st.wrong, { set: s, review: true }) }, `間違い帳 ${st.wrong.length}`)));
   }
 
-  // ---------- 1周目の記録（見るだけ。2026-11-03 までの記録をそのまま入れてある） ----------
-  // ○＝一度も間違えずに正解した肢、×＝1回以上間違えた肢
-  let REC1 = null, showRound = 2;
-  const roundSwitch = () => REC1 ? el("div", { class: "chips", role: "group", "aria-label": "見る記録" },
-    [[2, "2周目（いま）"], [1, "1周目の記録"]].map(([n, t]) => el("button", {
-      class: "chip", "aria-pressed": showRound === n ? "true" : "false",
-      onclick: () => { showRound = n; renderHome(); }
-    }, t))) : null;
-  const missed1 = it => REC1[it.key] && REC1[it.key].w > 0;
-  function round1Card(s) {
-    const r = REC1[s.key], miss = s.items.filter(missed1), once = s.items.filter(it => REC1[it.key] && !missed1(it)).length;
-    return el("article", { class: "set" },
-      el("div", { class: "set-top" },
-        el("h3", {}, s.name),
-        el("span", { class: "range" }, rangeText(s.items))),
-      el("div", { class: "marks", role: "img", "aria-label": `${s.items.length}肢中 一度で正解 ${once}肢` },
-        s.items.map(it => { const x = REC1[it.key]; return x ? el("span", { class: x.w ? "ng" : "ok" }, x.w ? "×" : "○") : el("span", { class: "yet" }, "–"); })),
-      el("dl", { class: "set-stats" },
-        el("div", {}, el("dt", {}, "一度で正解"), el("dd", {}, `${once}/${s.items.length}`)),
-        el("div", {}, el("dt", {}, "前回"), el("dd", {}, r ? `${r.last}/${r.size}` : "–")),
-        el("div", {}, el("dt", {}, "最高"), el("dd", {}, r ? `${r.best}/${r.size}` : "–")),
-        el("div", {}, el("dt", {}, "回数"), el("dd", {}, `${r ? r.n : 0}回`))),
-      el("div", { class: "set-actions" },
-        el("button", { class: "secondary", disabled: !miss.length, onclick: () => startOX(miss, { set: s, review: true }) }, `1周目に間違えた肢を解く ${miss.length}`)));
-  }
-  function renderRound1() {
-    const all = items(QUESTIONS).filter(it => REC1[it.key]);
-    const miss = all.filter(missed1);
-    const times = all.reduce((n, it) => n + REC1[it.key].a, 0);
-    const sets = setsOf(settings.field);
-    const hard = items(QUESTIONS).filter(it => it.q.field === settings.field && REC1[it.key] && REC1[it.key].w >= 2)
-      .sort((a, b) => REC1[b.key].w - REC1[a.key].w);
-    app.replaceChildren(
-      el("section", { class: "hero" },
-        el("h1", {}, "1周目の記録"),
-        el("p", {}, "2026年11月3日までに解いた記録。見るだけで、ここで解いても1周目の記録は変わらない（2周目の記録に付く）")),
-      roundSwitch(),
-      el("div", { class: "stats" },
-        el("div", { class: "stat" }, el("b", {}, String(all.length)), el("span", {}, "解いた肢")),
-        el("div", { class: "stat" }, el("b", {}, pct(all.length - miss.length, all.length)), el("span", {}, "一度で正解")),
-        el("div", { class: "stat" }, el("b", {}, String(times)), el("span", {}, "解いた回数"))),
-      el("section", {},
-        el("p", { class: "label" }, "分野"),
-        el("div", { class: "chips", role: "group", "aria-label": "field" }, FIELDS.map(f => f.key).map(v => el("button", {
-          class: "chip", "aria-pressed": settings.field === v ? "true" : "false",
-          disabled: !QUESTIONS.some(q => q.field === v),
-          onclick: () => { settings.field = v; saveSettings(); renderHome(); }
-        }, v)))),
-      el("section", { class: "sets" },
-        el("div", { class: "sec-h" },
-          el("h2", {}, "1肢ずつ ○×"),
-          el("span", { class: "note" }, `${settings.field} ${sets.length}組`),
-          el("span", { class: "legend" }, el("b", { class: "ok" }, "○"), "一度で正解", el("b", { class: "ng" }, "×"), "間違えた")),
-        el("div", { class: "setgrid" }, sets.map(round1Card))),
-      hard.length ? el("section", {},
-        el("p", { class: "label" }, `${settings.field}で2回以上間違えた肢（${hard.length}肢）`),
-        el("div", { class: "list" }, hard.map(it => el("div", { class: "row" },
-          el("span", { class: "id" }, `${it.q.id} ${it.c.label}`),
-          el("span", { class: "t" }, `×${REC1[it.key].w}回　` + (it.c.text.length > 40 ? it.c.text.slice(0, 40) + "…" : it.c.text))))),
-        el("button", { class: "secondary", onclick: () => startOX(hard, { review: true }) }, `この${hard.length}肢を解く`)) : null
-    );
-    window.scrollTo(0, 0);
-  }
-
   // ---------- ホーム ----------
   let view = "home";
   function renderHome() {
     view = "home"; homeBtn.hidden = true; keyHandler = null;
-    if (REC1 && showRound === 1) return renderRound1();
     const all = items(QUESTIONS);
     const tried = all.filter(it => rec[it.key]);
     const right = tried.filter(it => rec[it.key].last === 1).length;
@@ -527,7 +462,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       el("section", { class: "hero" },
         el("h1", {}, "土地家屋調査士 過去問"),
         el("p", {}, `収録 ${QUESTIONS.length}問（1肢にすると${all.length}肢）・試作版`)),
-      roundSwitch(),
       el("div", { class: "stats" },
         el("div", { class: "stat" }, el("b", {}, String(tried.length)), el("span", {}, "解いた肢")),
         el("div", { class: "stat" }, el("b", {}, pct(right, tried.length)), el("span", {}, "直近の正答率")),
@@ -824,7 +758,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
     const d = JSON.parse(new TextDecoder().decode(buf));
     QUESTIONS = Array.isArray(d) ? d : d.q;
     SYNC = Array.isArray(d) ? null : (d.sync || null);
-    REC1 = Array.isArray(d) ? null : (d.r1 || null);
     renderHome();
     syncNow();
   }
