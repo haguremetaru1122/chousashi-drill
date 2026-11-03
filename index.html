@@ -96,6 +96,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 .top-in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
 .brand { font-weight: 700; font-size: 17px; letter-spacing: 0.04em; margin-right: auto; }
 .brand small { font-weight: 400; color: var(--ink-soft); font-size: 12px; margin-left: 8px; letter-spacing: 0.02em; }
+.round { font-weight: 700; font-size: 12px; color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 2px 8px; margin-left: 8px; vertical-align: 2px; letter-spacing: 0.02em; }
 .sync { font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
 .ghost { background: none; border: 1px solid var(--rule); border-radius: 8px; padding: 6px 12px; font-size: 14px; }
 
@@ -258,7 +259,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 </head>
 <body>
 <header class="top"><div class="top-in">
-  <div class="brand">調査士 択一ドリル<small>択一の王子より</small></div>
+  <div class="brand">調査士 択一ドリル<small>択一の王子より</small><span class="round">2周目</span></div>
   <span class="sync" id="sync">記録：この端末</span>
   <button class="ghost" id="homeBtn" hidden>やめる</button>
 </div></header>
@@ -280,7 +281,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   // ---------- 記録 ----------
   // rec[key] = { a: 解いた回数, w: 間違えた回数, last: 1|0, t: 時刻 }
   // key: "A-1-1/ア"（1肢）・"A-1-1"（5択）
-  const LS_KEY = "chousashi-drill-rec-v1";
+  // 2周目（2026-11-03〜）。1周目の記録は "chousashi-drill-rec-v1" とネットの records.json に残してある
+  const LS_KEY = "chousashi-drill-rec-r2";
   let rec = {};
   try { rec = JSON.parse(localStorage.getItem(LS_KEY) || "{}") || {}; } catch (e) { rec = {}; }
   let dbRef = null, saveTimer = null, saving = Promise.resolve();
@@ -702,15 +704,16 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
     try {
       for (let attempt = 0; attempt < 3; attempt++) {
         const r = await gh("GET");
-        if (!r.ok) throw new Error("get " + r.status);
-        const j = await r.json();
-        const remote = JSON.parse(b64dec(j.content)).rec || {};
+        if (!r.ok && r.status !== 404) throw new Error("get " + r.status);
+        // 404＝まだ置き場所が無い（その周の最初の1回）→空から始める
+        const j = r.ok ? await r.json() : {};
+        const remote = j.content ? (JSON.parse(b64dec(j.content)).rec || {}) : {};
         const changed = mergeRemote(remote);
         saveLocal();
         if (changed && view === "home") renderHome();
         const needPush = Object.keys(rec).some(k => !remote[k] || remote[k].t < rec[k].t);
         if (!needPush) break;
-        const put = await gh("PUT", { message: "記録を更新", content: b64enc(JSON.stringify({ rec })), sha: j.sha });
+        const put = await gh("PUT", { message: "記録を更新", content: b64enc(JSON.stringify({ rec })), ...(j.sha ? { sha: j.sha } : {}) });
         if (put.ok) break;
         if (put.status !== 409 && put.status !== 422) throw new Error("put " + put.status);
         // ほかの端末が先に書いた → 読み直して合わせてから書く
