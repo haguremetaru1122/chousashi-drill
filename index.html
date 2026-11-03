@@ -315,6 +315,27 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
     return changed;
   }
 
+  // ---------- 裏の記録（画面には出さない。2周目〜） ----------
+  // 1回ずつの出来事を端末にためて、ネットの logs/r2/日付_端末.json に送る（1つのファイルは1台の端末だけが書く）
+  // e: open=開いた run=解き始め ox=1肢○× ex=5択 next=次へ（解説を読んだ時間） page=元のページ quit=やめる hide/show=裏に回した・戻った
+  const LOG_KEY = "chousashi-drill-log-r2", LOG_SENT = "chousashi-drill-log-sent-r2";
+  let DEV = localStorage.getItem("chousashi-drill-dev");
+  if (!DEV) { DEV = Math.random().toString(36).slice(2, 8); try { localStorage.setItem("chousashi-drill-dev", DEV); } catch (e) {} }
+  const SES = Date.now().toString(36);
+  let logs = [], runNo = 0, curRun = 0;
+  try { logs = JSON.parse(localStorage.getItem(LOG_KEY) || "[]") || []; } catch (e) { logs = []; }
+  const ymd = t => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const logFile = t => `logs/${DEV.startsWith("test") ? "test" : "r2"}/${ymd(t)}_${DEV}.json`;
+  function log(e, x = {}) {
+    try {
+      logs.push(Object.assign({ t: Date.now(), e, s: SES, r: curRun }, x));
+      localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+    } catch (err) {}
+  }
+  log("open", { dev: DEV, ua: navigator.userAgent, w: screen.width, h: screen.height, vw: innerWidth, vh: innerHeight,
+    app: matchMedia("(display-mode: standalone)").matches || navigator.standalone === true ? 1 : 0, on: navigator.onLine === false ? 0 : 1 });
+  document.addEventListener("visibilitychange", () => log(document.hidden ? "hide" : "show"));
+
   // ---------- 暗号化データの読み込み ----------
   // data.bin・pages/*.bin・figs/*.bin は「先頭12バイト＝IV、残り＝AES-GCMの暗号文」
   const enc = new TextEncoder();
@@ -499,6 +520,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   function pagesBlock(q) {
     const box = el("div", { class: "pages", hidden: true });
     const btn = el("button", { class: "secondary", onclick: () => {
+      if (box.hidden) log("page", { q: q.id });
       if (!box.childElementCount) {
         const all = [...q.pages.problem.map(p => [p, "問題"]), ...q.pages.explanation.map(p => [p, "解説"])];
         all.forEach(([p, kind]) => box.append(el("figure", {},
@@ -526,6 +548,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   function startOX(list, opts = {}) {
     if (settings.order === "ランダム" || opts.review) list = shuffle(list);
     const run = { list, i: 0, ok: 0, missed: [], set: opts.set || null, review: !!opts.review };
+    curRun = ++runNo;
+    log("run", { m: "ox", set: run.set ? run.set.key : null, rv: run.review ? 1 : 0, ord: settings.order, n: list.length });
     view = "ox"; homeBtn.hidden = false;
     showOX(run);
   }
@@ -533,7 +557,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
     if (run.i >= run.list.length) return run.set ? finishSet(run) : finish(run.ok, run.list.length, "肢");
     const it = run.list[run.i], { q, c, key } = it;
     const label = run.set ? `${run.set.name}${run.review ? "・間違い帳" : ""}` : (run.review ? "間違い帳" : null);
-    let answered = false;
+    let answered = false, shownAt = Date.now(), answeredAt = 0;
     const btnO = el("button", { class: "o", "aria-label": "正しい（○）", onclick: () => answer(true) }, "○");
     const btnX = el("button", { class: "x", "aria-label": "誤り（×）", onclick: () => answer(false) }, "×");
     const result = el("div", { "aria-live": "polite" });
@@ -542,11 +566,15 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       if (answered) return; answered = true;
       const ok = saysTrue === c.correct;
       if (ok) run.ok++; else run.missed.push(it);
+      const before = rec[key];
+      answeredAt = Date.now();
+      log("ox", { k: key, a: saysTrue ? 1 : 0, ok: ok ? 1 : 0, ms: answeredAt - shownAt, i: run.i,
+        prev: before ? before.last : null, ago: before ? answeredAt - before.t : null });
       mark(key, ok);
       btnO.disabled = btnX.disabled = true;
       (saysTrue ? btnO : btnX).classList.add("picked");
       const pg = pagesBlock(q);
-      const next = el("button", { class: "primary", onclick: () => { run.i++; showOX(run); } }, run.i + 1 < run.list.length ? "次へ" : "結果を見る");
+      const next = el("button", { class: "primary", onclick: () => goNext() }, run.i + 1 < run.list.length ? "次へ" : "結果を見る");
       result.replaceChildren(
         el("div", { class: `verdict ${ok ? "good" : "bad"}` },
           el("div", { class: "v" }, ok ? "正解" : "不正解",
@@ -572,8 +600,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
     keyHandler = e => {
       if (!answered && (e.key === "o" || e.key === "1")) answer(true);
       else if (!answered && (e.key === "x" || e.key === "2")) answer(false);
-      else if (answered && e.key === "Enter") { run.i++; showOX(run); }
+      else if (answered && e.key === "Enter") goNext();
     };
+    function goNext() { log("next", { k: key, ms: Date.now() - answeredAt }); run.i++; showOX(run); }
     window.scrollTo(0, 0);
   }
 
@@ -612,13 +641,15 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   function startExam(qs) {
     if (settings.order === "ランダム") qs = shuffle(qs);
     const run = { list: qs, i: 0, ok: 0 };
+    curRun = ++runNo;
+    log("run", { m: "ex", lv: settings.level, ord: settings.order, n: qs.length });
     view = "exam"; homeBtn.hidden = false;
     showExam(run);
   }
   function showExam(run) {
     if (run.i >= run.list.length) return finish(run.ok, run.list.length, "問");
     const q = run.list[run.i];
-    let answered = false;
+    let answered = false, shownAt = Date.now(), answeredAt = 0;
     const result = el("div", { "aria-live": "polite" });
     const optBtns = q.options.map((combo, k) => el("button", { onclick: () => answer(k + 1) },
       el("b", {}, String(k + 1)), q.type === "single" ? null : el("span", {}, combo)));
@@ -628,10 +659,14 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       const rights = q.answers || [q.answer];  // 本で正解が2つある問題（C-3-9 など）は answers に並べる
       const ok = rights.includes(n);
       if (ok) run.ok++;
+      const before = rec[q.id];
+      answeredAt = Date.now();
+      log("ex", { k: q.id, a: n, ok: ok ? 1 : 0, ms: answeredAt - shownAt, i: run.i,
+        prev: before ? before.last : null, ago: before ? answeredAt - before.t : null });
       mark(q.id, ok);
       optBtns.forEach((b, k) => { b.disabled = true; if (rights.includes(k + 1)) b.classList.add("right"); else if (k + 1 === n) b.classList.add("wrong"); });
       const pg = pagesBlock(q);
-      const next = el("button", { class: "primary", onclick: () => { run.i++; showExam(run); } }, run.i + 1 < run.list.length ? "次の問題へ" : "結果を見る");
+      const next = el("button", { class: "primary", onclick: () => goNext() }, run.i + 1 < run.list.length ? "次の問題へ" : "結果を見る");
       result.replaceChildren(
         el("div", { class: `verdict ${ok ? "good" : "bad"}` },
           el("div", { class: "v" }, ok ? "正解" : "不正解", el("span", { class: "ans" }, "正解は " + rights.map(r => q.type === "single" ? String(r) : `${r}（${q.options[r - 1]}）`).join(" 又は "))),
@@ -658,8 +693,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       result);
     keyHandler = e => {
       if (!answered && /^[1-5]$/.test(e.key)) answer(Number(e.key));
-      else if (answered && e.key === "Enter") { run.i++; showExam(run); }
+      else if (answered && e.key === "Enter") goNext();
     };
+    function goNext() { log("next", { k: q.id, ms: Date.now() - answeredAt }); run.i++; showExam(run); }
     window.scrollTo(0, 0);
   }
 
@@ -680,15 +716,15 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
     if (e.key === "Enter" && e.target.tagName === "BUTTON") return; // ボタン自身の決定と二重にならないように
     if (keyHandler) keyHandler(e);
   });
-  homeBtn.addEventListener("click", () => { keyHandler = null; renderHome(); });
+  homeBtn.addEventListener("click", () => { log("quit", { v: view }); keyHandler = null; renderHome(); });
   // ---------- 記録の同期（GitHubの自分専用の置き場所 records.json） ----------
   // 端末の記録とネットの記録を、肢ごとに「新しく解いたほう」でそろえる
   let SYNC = null, syncing = false, syncAgain = false, syncTimer = null;
   const b64enc = str => { let bin = ""; enc.encode(str).forEach(b => { bin += String.fromCharCode(b); }); return btoa(bin); };
   const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), ch => ch.charCodeAt(0)));
   const hhmm = () => { const d = new Date(); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`; };
-  function gh(method, body) {
-    return fetch(`https://api.github.com/repos/${SYNC.repo}/contents/${SYNC.path}`, {
+  function gh(method, body, path = SYNC.path) {
+    return fetch(`https://api.github.com/repos/${SYNC.repo}/contents/${path}`, {
       method, cache: "no-store",
       headers: Object.assign({ Authorization: "Bearer " + SYNC.token, Accept: "application/vnd.github+json" },
         body ? { "Content-Type": "application/json" } : {}),
@@ -719,12 +755,35 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
         // ほかの端末が先に書いた → 読み直して合わせてから書く
       }
       syncEl.textContent = `記録：同期済み ${hhmm()}`;
+      await sendLogs();
     } catch (e) {
       syncEl.textContent = navigator.onLine === false ? "記録：この端末（電波なし）" : "記録：同期できず（あとでもう一度）";
     } finally {
       syncing = false;
       if (syncAgain) { syncAgain = false; syncNow(); }
     }
+  }
+  // 裏の記録を送る（失敗しても表の記録には関係ない。次の同期でまた送る）
+  async function sendLogs() {
+    try {
+      let sent = {};
+      try { sent = JSON.parse(localStorage.getItem(LOG_SENT) || "{}") || {}; } catch (e) {}
+      const byFile = {};
+      logs.forEach(x => { (byFile[logFile(x.t)] = byFile[logFile(x.t)] || []).push(x); });
+      for (const [f, ev] of Object.entries(byFile)) {
+        if ((sent[f] || 0) >= ev.length) continue;
+        const r = await gh("GET", null, f);
+        if (!r.ok && r.status !== 404) continue;
+        const j = r.ok ? await r.json() : {};
+        const put = await gh("PUT", { message: "裏の記録", content: b64enc(JSON.stringify({ ev })), ...(j.sha ? { sha: j.sha } : {}) }, f);
+        if (put.ok) sent[f] = ev.length;
+      }
+      // 送り終わった古い日（14日より前）は端末から消す
+      const old = ymd(Date.now() - 14 * 864e5);
+      const keep = logs.filter(x => { const f = logFile(x.t); return !(ymd(x.t) < old && (sent[f] || 0) >= byFile[f].length); });
+      if (keep.length !== logs.length) { logs = keep; localStorage.setItem(LOG_KEY, JSON.stringify(logs)); }
+      localStorage.setItem(LOG_SENT, JSON.stringify(sent));
+    } catch (e) {}
   }
   function syncSoon() { clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, 4000); }
   window.addEventListener("online", () => syncNow());
@@ -758,6 +817,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
     const d = JSON.parse(new TextDecoder().decode(buf));
     QUESTIONS = Array.isArray(d) ? d : d.q;
     SYNC = Array.isArray(d) ? null : (d.sync || null);
+    // 試しの端末（test…）は本物の記録に触らないよう、試し専用の置き場所を使う
+    if (SYNC && DEV.startsWith("test")) SYNC = Object.assign({}, SYNC, { path: "records_test.json" });
     renderHome();
     syncNow();
   }
