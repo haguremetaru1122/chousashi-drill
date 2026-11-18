@@ -246,6 +246,18 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 .empty { color: var(--ink-soft); font-size: 14px; }
 .note { font-size: 12px; color: var(--ink-soft); }
 
+/* テキスト */
+.txlist { display: grid; gap: 8px; }
+.txitem { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 2px 12px; text-align: left; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 16px; min-height: 48px; }
+.txitem:hover { border-color: var(--accent); }
+.txitem b { font-size: 16px; }
+.txitem span { font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.txview { position: fixed; inset: 0; z-index: 30; background: var(--paper); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.txbar { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--paper); border-bottom: 1px solid var(--rule); padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; }
+.txbar b { font-size: 15px; min-width: 0; }
+.txbar .ghost { flex: none; min-height: 40px; }
+.txbody { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
 @media (max-width: 480px) {
   .stmt { font-size: 17px; }
   .opts { grid-template-columns: repeat(5, 1fr); gap: 6px; }
@@ -458,8 +470,54 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       short ? el("p", { class: "note" }, `まだ${s.items.length}肢。問題を足すと10肢まで埋まる`) : null,
       el("div", { class: "set-actions" },
         el("button", { class: "primary", onclick: () => startOX(s.items, { set: s }) }, r ? "もう一度解く" : "解く"),
-        el("button", { class: "secondary", disabled: !st.wrong.length, onclick: () => startOX(st.wrong, { set: s, review: true }) }, `間違い帳 ${st.wrong.length}`)));
+        el("button", { class: "secondary", disabled: !st.wrong.length, onclick: () => startOX(st.wrong, { set: s, review: true }) }, `間違い帳 ${st.wrong.length}`),
+        textBtn(s.items.map(it => it.q.id).find(textOf), null, "set")));
   }
+
+  // ---------- テキスト ----------
+  // 問題の上に重ねて開くので、閉じると解いていた画面にそのまま戻る
+  let TEXTS = [], TEXT_CSS = "", txOpen = null;
+  const textOf = id => TEXTS.find(t => t.qs.includes(id));
+  function textBtn(qid, ref, from) {
+    const t = qid && textOf(qid);
+    return t ? el("button", { class: "secondary", onclick: () => openText(t, ref || qid, from) }, "テキスト") : null;
+  }
+  function openText(t, ref, from) {
+    if (txOpen) return;
+    log("text", { id: t.id, k: ref || null, from });
+    const body = el("div", { class: "txbody" });
+    const shadow = body.attachShadow({ mode: "open" });
+    shadow.innerHTML = `<style>${TEXT_CSS}</style>${t.html}`;
+    const refs = [...shadow.querySelectorAll("[data-ref]")];
+    // 今、間違い帳に入っている肢に印を付ける
+    refs.forEach(n => {
+      if (n.dataset.ref.split(" ").some(k => rec[k] && rec[k].last === 0)) {
+        const at = n.querySelector(".ref");
+        if (at) at.append(el("span", { class: "missed" }, "間違い帳"));
+      }
+    });
+    const view = el("div", { class: "txview", role: "dialog", "aria-label": t.title },
+      el("div", { class: "txbar" }, el("b", {}, t.title),
+        el("button", { class: "ghost", onclick: () => history.back() }, "閉じる")),
+      body);
+    txOpen = { view, id: t.id, at: Date.now(), keys: keyHandler };
+    keyHandler = e => { if (e.key === "Escape") history.back(); };
+    history.pushState({ tx: 1 }, "");
+    document.documentElement.style.overflow = "hidden";
+    document.body.append(view);
+    // 開いた問題の所まで進めて、枠で示す
+    const hit = ref && (refs.find(n => n.dataset.ref.split(" ").includes(ref)) || refs.find(n => n.dataset.ref.split(" ").some(k => k.startsWith(ref + "/"))));
+    if (hit) { hit.classList.add("tx-hit"); hit.scrollIntoView({ block: "center" }); }
+  }
+  function closeText() {
+    if (!txOpen) return;
+    log("textclose", { id: txOpen.id, ms: Date.now() - txOpen.at });
+    txOpen.view.remove();
+    keyHandler = txOpen.keys;
+    txOpen = null;
+    document.documentElement.style.overflow = "";
+  }
+  window.addEventListener("popstate", closeText);
 
   // ---------- ホーム ----------
   let view = "home";
@@ -490,6 +548,10 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       el("section", {},
         el("p", { class: "label" }, "分野"),
         chipRow("field", FIELDS.map(f => f.key), v => !QUESTIONS.some(q => q.field === v))),
+      TEXTS.some(t => t.field === settings.field) ? el("section", { class: "sets" },
+        el("div", { class: "sec-h" }, el("h2", {}, "テキスト")),
+        el("div", { class: "txlist" }, TEXTS.filter(t => t.field === settings.field).map(t =>
+          el("button", { class: "txitem", onclick: () => openText(t, null, "home") }, el("b", {}, t.title), el("span", {}, t.range))))) : null,
       el("section", { class: "sets" },
         el("div", { class: "sec-h" },
           el("h2", {}, "1肢ずつ ○×"),
@@ -583,7 +645,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
             el("span", { class: `judge ${c.correct ? "t" : "f"}` }, c.correct ? "正しい。" : "誤り。"), c.explanation || q.explanation),
           c.figure ? el("figure", { class: "fig" }, encImg(c.figure, `${q.id} ${c.label}の解説の図`)) : null,
           q.note ? el("p", { class: "qnote" }, q.note) : null),
-        el("div", { class: "actions" }, next, pg.btn), pg.box);
+        el("div", { class: "actions" }, next, textBtn(q.id, key, "ox"), pg.btn), pg.box);
       next.focus({ preventScroll: true });
     }
 
@@ -677,7 +739,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
           q.explanation ? el("p", { class: "expl" }, q.explanation) : null,
           q.summary ? el("p", { class: "summary" }, q.summary) : null,
           q.note ? el("p", { class: "qnote" }, q.note) : null),
-        el("div", { class: "actions" }, next, pg.btn), pg.box);
+        el("div", { class: "actions" }, next, textBtn(q.id, q.id, "exam"), pg.btn), pg.box);
       next.focus({ preventScroll: true });
     }
 
@@ -816,6 +878,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   function start(buf) {
     const d = JSON.parse(new TextDecoder().decode(buf));
     QUESTIONS = Array.isArray(d) ? d : d.q;
+    TEXTS = d.texts || []; TEXT_CSS = d.textCss || "";
     SYNC = Array.isArray(d) ? null : (d.sync || null);
     // 試しの端末（test…）は本物の記録に触らないよう、試し専用の置き場所を使う
     if (SYNC && DEV.startsWith("test")) SYNC = Object.assign({}, SYNC, { path: "records_test.json" });
