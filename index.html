@@ -477,9 +477,10 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
   // ---------- テキスト ----------
   // 問題の上に重ねて開くので、閉じると解いていた画面にそのまま戻る
   let TEXTS = [], TEXT_CSS = "", txOpen = null;
-  const textOf = id => TEXTS.find(t => t.qs.includes(id));
+  // 1問の肢が2つのテキストに分かれることがあるので、肢が分かるときはその肢が載っている方を開く
+  const textOf = (id, ref) => (ref && TEXTS.find(t => (t.refs || []).includes(ref))) || TEXTS.find(t => t.qs.includes(id));
   function textBtn(qid, ref, from) {
-    const t = qid && textOf(qid);
+    const t = qid && textOf(qid, ref);
     return t ? el("button", { class: "secondary", onclick: () => openText(t, ref || qid, from) }, "テキスト") : null;
   }
   function openText(t, ref, from) {
