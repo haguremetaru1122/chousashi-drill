@@ -538,6 +538,30 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
         onclick: () => { settings[name] = v; saveSettings(); renderHome(); }
       }, v)));
 
+    const top = [
+      el("section", { class: "hero" },
+        el("h1", {}, "土地家屋調査士 過去問"),
+        el("p", {}, `収録 ${QUESTIONS.length}問（1肢にすると${all.length}肢）・試作版`)),
+      el("div", { class: "stats" },
+        el("div", { class: "stat" }, el("b", {}, String(tried.length)), el("span", {}, "解いた肢")),
+        el("div", { class: "stat" }, el("b", {}, pct(right, tried.length)), el("span", {}, "直近の正答率")),
+        el("div", { class: "stat" }, el("b", {}, String(wrong.length)), el("span", {}, "間違い帳"))),
+      el("section", {},
+        el("p", { class: "label" }, "分野"),
+        chipRow("field", [...FIELDS.map(f => f.key), "テキスト"], v => v !== "テキスト" && !QUESTIONS.some(q => q.field === v)))];
+    // 分野「テキスト」：ぴよの学校の講義に合わせたテキストを、法律ごとに並べる
+    if (settings.field === "テキスト") {
+      const LAWS = [["民法", "民法"], ["土地家屋調査士法", "調査士法"], ["不動産登記法", "登記"]];
+      app.replaceChildren(...top, ...LAWS.map(([name, field]) => {
+        const ts = TEXTS.filter(t => t.series === "piyo" && t.field === field);
+        return el("section", { class: "sets" },
+          el("div", { class: "sec-h" }, el("h2", {}, name)),
+          ts.length ? el("div", { class: "txlist" }, ts.map(t =>
+            el("button", { class: "txitem", onclick: () => openText(t, null, "home") }, el("b", {}, t.title), el("span", {}, t.range))))
+            : el("p", { class: "empty" }, "まだありません"));
+      }));
+      return;
+    }
     app.replaceChildren(
       el("section", { class: "hero" },
         el("h1", {}, "土地家屋調査士 過去問"),
@@ -548,18 +572,11 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
         el("div", { class: "stat" }, el("b", {}, String(wrong.length)), el("span", {}, "間違い帳"))),
       el("section", {},
         el("p", { class: "label" }, "分野"),
-        chipRow("field", FIELDS.map(f => f.key), v => !QUESTIONS.some(q => q.field === v))),
+        chipRow("field", [...FIELDS.map(f => f.key), "テキスト"], v => v !== "テキスト" && !QUESTIONS.some(q => q.field === v))),
       TEXTS.some(t => t.field === settings.field && !t.series) ? el("section", { class: "sets" },
         el("div", { class: "sec-h" }, el("h2", {}, "テキスト")),
         el("div", { class: "txlist" }, TEXTS.filter(t => t.field === settings.field && !t.series).map(t =>
           el("button", { class: "txitem", onclick: () => openText(t, null, "home") }, el("b", {}, t.title), el("span", {}, t.range))))) : null,
-      // ぴよの学校の講義に合わせたテキスト（分野ごと）
-      el("section", { class: "sets" },
-        el("div", { class: "sec-h" }, el("h2", {}, "ぴよテキスト")),
-        TEXTS.some(t => t.series === "piyo" && t.field === settings.field)
-          ? el("div", { class: "txlist" }, TEXTS.filter(t => t.series === "piyo" && t.field === settings.field).map(t =>
-              el("button", { class: "txitem", onclick: () => openText(t, null, "home") }, el("b", {}, t.title), el("span", {}, t.range))))
-          : el("p", { class: "empty" }, "まだありません")),
       el("section", { class: "sets" },
         el("div", { class: "sec-h" },
           el("h2", {}, "1肢ずつ ○×"),
