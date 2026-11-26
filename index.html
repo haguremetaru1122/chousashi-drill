@@ -549,10 +549,17 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
       el("section", {},
         el("p", { class: "label" }, "分野"),
         chipRow("field", FIELDS.map(f => f.key), v => !QUESTIONS.some(q => q.field === v))),
-      TEXTS.some(t => t.field === settings.field) ? el("section", { class: "sets" },
+      TEXTS.some(t => t.field === settings.field && !t.series) ? el("section", { class: "sets" },
         el("div", { class: "sec-h" }, el("h2", {}, "テキスト")),
-        el("div", { class: "txlist" }, TEXTS.filter(t => t.field === settings.field).map(t =>
+        el("div", { class: "txlist" }, TEXTS.filter(t => t.field === settings.field && !t.series).map(t =>
           el("button", { class: "txitem", onclick: () => openText(t, null, "home") }, el("b", {}, t.title), el("span", {}, t.range))))) : null,
+      // ぴよの学校の講義に合わせたテキスト（分野ごと）
+      el("section", { class: "sets" },
+        el("div", { class: "sec-h" }, el("h2", {}, "ぴよテキスト")),
+        TEXTS.some(t => t.series === "piyo" && t.field === settings.field)
+          ? el("div", { class: "txlist" }, TEXTS.filter(t => t.series === "piyo" && t.field === settings.field).map(t =>
+              el("button", { class: "txitem", onclick: () => openText(t, null, "home") }, el("b", {}, t.title), el("span", {}, t.range))))
+          : el("p", { class: "empty" }, "まだありません")),
       el("section", { class: "sets" },
         el("div", { class: "sec-h" },
           el("h2", {}, "1肢ずつ ○×"),
